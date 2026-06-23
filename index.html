@@ -338,6 +338,56 @@
       line-height: 1.45;
     }
 
+    .signature-panel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .signature-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .signature-head h3 {
+      font-size: 15px;
+    }
+
+    .signature-pad {
+      margin-top: 10px;
+      border: 1px dashed #9fb1bf;
+      border-radius: 7px;
+      background: #fbfcfd;
+      overflow: hidden;
+    }
+
+    .signature-pad canvas {
+      display: block;
+      width: 100%;
+      height: 150px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .signature-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    .signature-line {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
     .hint {
       color: var(--muted);
       font-size: 13px;
@@ -443,6 +493,10 @@
 
       button {
         display: none;
+      }
+
+      .signature-pad canvas {
+        height: 120px;
       }
     }
   </style>
@@ -556,6 +610,20 @@
               <button id="copySummaryBtn">Copiar resumen</button>
             </div>
             <div class="post-summary" id="postSummary" style="margin-top: 12px;"></div>
+            <div class="signature-panel">
+              <div class="signature-head">
+                <h3>Firma de cierre</h3>
+                <span class="pill" id="signatureStatus">Sin firma</span>
+              </div>
+              <label><span>Nombre del firmante</span><input id="signatureName" placeholder="Piloto / responsable"></label>
+              <div class="signature-pad">
+                <canvas id="signatureCanvas" aria-label="Zona de firma"></canvas>
+              </div>
+              <div class="signature-actions no-print">
+                <button id="clearSignatureBtn" type="button">Limpiar firma</button>
+              </div>
+              <div class="signature-line">Firma del piloto / responsable</div>
+            </div>
           </div>
         </section>
       </div>
@@ -663,14 +731,15 @@
     const fields = [
       "date", "departure", "arrival", "aircraft", "pilot", "crew", "origin", "destination",
       "missionType", "weather", "risks", "flightNotes", "result", "flightTime", "fuelEnd",
-      "nextAction", "incidents", "lessons"
+      "nextAction", "incidents", "lessons", "signatureName"
     ];
 
     const storageKey = "flight-checklist-v1";
     const state = {
       activePhase: phases[0].id,
       checks: {},
-      postClosed: false
+      postClosed: false,
+      signatureData: ""
     };
 
     phases.forEach(phase => {
@@ -790,10 +859,14 @@
         `Resultado: ${fieldValue("result") || "Pendiente"} | Tiempo: ${fieldValue("flightTime") || "Sin registrar"}`,
         `Incidencias: ${fieldValue("incidents") || "Sin incidencias registradas"}`,
         `Lecciones: ${fieldValue("lessons") || "Sin lecciones registradas"}`,
-        `Próxima acción: ${fieldValue("nextAction") || "Sin definir"}`
+        `Próxima acción: ${fieldValue("nextAction") || "Sin definir"}`,
+        `Firmado por: ${fieldValue("signatureName") || "Sin firmante"}`
       ];
       $("#postSummary").innerHTML = lines.join("<br>");
       $("#printSummary").innerHTML = lines.join("<br>");
+      $("#signatureStatus").textContent = state.signatureData ? "Firmado" : "Sin firma";
+      $("#signatureStatus").style.background = state.signatureData ? "#e7f5ee" : "#eef3f6";
+      $("#signatureStatus").style.color = state.signatureData ? "var(--ok)" : "var(--muted)";
     }
 
     function render() {
@@ -820,6 +893,7 @@
         checks: state.checks,
         activePhase: state.activePhase,
         postClosed: state.postClosed,
+        signatureData: state.signatureData,
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem(storageKey, JSON.stringify(payload));
@@ -836,6 +910,7 @@
         Object.assign(state.checks, payload.checks || {});
         state.activePhase = payload.activePhase || phases[0].id;
         state.postClosed = Boolean(payload.postClosed);
+        state.signatureData = payload.signatureData || "";
         if (payload.updatedAt) $("#saveState").textContent = `Borrador cargado: ${new Date(payload.updatedAt).toLocaleString()}`;
       } catch {
         $("#saveState").textContent = "No se pudo cargar el borrador";
@@ -850,6 +925,8 @@
       phases.forEach(phase => state.checks[phase.id] = phase.items.map(() => false));
       state.activePhase = phases[0].id;
       state.postClosed = false;
+      state.signatureData = "";
+      clearSignatureCanvas(false);
       $("#saveState").textContent = "Nueva misión";
       render();
     }
@@ -867,6 +944,89 @@
       }).catch(() => {
         $("#saveState").textContent = "No se pudo copiar automáticamente";
       });
+    }
+
+    function resizeSignatureCanvas() {
+      const canvas = $("#signatureCanvas");
+      const ctx = canvas.getContext("2d");
+      const previous = state.signatureData;
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#17202a";
+      if (previous) drawSignatureImage(previous);
+    }
+
+    function drawSignatureImage(dataUrl) {
+      const canvas = $("#signatureCanvas");
+      const ctx = canvas.getContext("2d");
+      const image = new Image();
+      image.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, canvas.clientWidth, canvas.clientHeight);
+      };
+      image.src = dataUrl;
+    }
+
+    function clearSignatureCanvas(shouldPersist = true) {
+      const canvas = $("#signatureCanvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      state.signatureData = "";
+      updateStatus();
+      if (shouldPersist) persist(true);
+    }
+
+    function initSignaturePad() {
+      const canvas = $("#signatureCanvas");
+      const ctx = canvas.getContext("2d");
+      let signing = false;
+
+      function point(event) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top
+        };
+      }
+
+      function start(event) {
+        event.preventDefault();
+        signing = true;
+        const pos = point(event);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      }
+
+      function move(event) {
+        if (!signing) return;
+        event.preventDefault();
+        const pos = point(event);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      }
+
+      function end() {
+        if (!signing) return;
+        signing = false;
+        state.signatureData = canvas.toDataURL("image/png");
+        updateStatus();
+        persist(false);
+      }
+
+      resizeSignatureCanvas();
+      canvas.addEventListener("pointerdown", start);
+      canvas.addEventListener("pointermove", move);
+      canvas.addEventListener("pointerup", end);
+      canvas.addEventListener("pointercancel", end);
+      canvas.addEventListener("pointerleave", end);
+      window.addEventListener("resize", resizeSignatureCanvas);
+      if (state.signatureData) drawSignatureImage(state.signatureData);
     }
 
     function handleFieldChange(event) {
@@ -888,9 +1048,11 @@
       location.hash = "postFlight";
     });
     $("#copySummaryBtn").addEventListener("click", copySummary);
+    $("#clearSignatureBtn").addEventListener("click", () => clearSignatureCanvas(true));
 
     load();
     render();
+    initSignaturePad();
   </script>
 </body>
 </html>
