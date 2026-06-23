@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checklist de Vuelo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5d6d7e;
+      --line: #d7dee6;
+      --accent: #1f7a8c;
+      --accent-dark: #145866;
+      --ok: #17824c;
+      --warn: #b25d00;
+      --danger: #b83232;
+      --soft: #e8f3f5;
+      --shadow: 0 12px 34px rgba(25, 41, 57, .10);
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(180deg, rgba(31, 122, 140, .10), transparent 260px),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 6px;
+      min-height: 38px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button.ghost {
+      background: transparent;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      min-height: 38px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    label span {
+      color: var(--muted);
+    }
+
+    .app {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      background: #0f2732;
+      color: #fff;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 4px;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .section-header h2 {
+      font-size: 18px;
+    }
+
+    .section-body {
+      padding: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 6px;
+      background: #e9eef2;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+
+    .tab {
+      flex: 1 1 110px;
+      border: 0;
+      background: transparent;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .tab.active {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 0 2px 8px rgba(25, 41, 57, .08);
+    }
+
+    .checklist {
+      display: grid;
+      gap: 8px;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) 92px;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .item input[type="checkbox"] {
+      width: 20px;
+      min-height: 20px;
+      accent-color: var(--accent);
+    }
+
+    .item-text {
+      min-width: 0;
+      line-height: 1.3;
+    }
+
+    .item.done .item-text {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #eef3f6;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .item.done .status {
+      background: #e7f5ee;
+      color: var(--ok);
+    }
+
+    .aside {
+      position: sticky;
+      top: 14px;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric:last-child {
+      border-bottom: 0;
+    }
+
+    .metric strong {
+      font-size: 22px;
+    }
+
+    .bar {
+      width: 100%;
+      height: 12px;
+      background: #e6edf1;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width .2s ease;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent-dark);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .post-summary {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      background: #fbfcfd;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .aside {
+        position: static;
+      }
+
+      .grid, .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        padding: 14px;
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions button {
+        flex: 1 1 130px;
+      }
+
+      .grid, .grid.two {
+        grid-template-columns: 1fr;
+      }
+
+      .item {
+        grid-template-columns: 28px minmax(0, 1fr);
+      }
+
+      .status {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .app {
+        max-width: none;
+        padding: 0;
+      }
+
+      .actions, .tabs, .no-print {
+        display: none !important;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .aside {
+        position: static;
+      }
+
+      .section {
+        box-shadow: none;
+        break-inside: avoid;
+        margin-bottom: 10px;
+      }
+
+      .section-header, .section-body {
+        padding: 10px 12px;
+      }
+
+      .print-only {
+        display: block;
+      }
+
+      .item {
+        break-inside: avoid;
+        min-height: 32px;
+      }
+
+      button {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark">FC</div>
+        <div>
+          <h1>Checklist de Vuelo</h1>
+          <div class="subtitle">Registro interno de misión, exportación PDF y post-vuelo</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="saveBtn" title="Guardar borrador local">Guardar</button>
+        <button id="resetBtn" class="ghost" title="Limpiar esta misión">Nueva misión</button>
+        <button id="pdfBtn" class="primary" title="Exportar usando impresión del navegador">Exportar PDF</button>
+      </div>
+    </header>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Datos de misión</h2>
+        <span class="pill" id="missionCode">Sin código</span>
+      </div>
+      <div class="section-body">
+        <div class="grid">
+          <label><span>Fecha</span><input id="date" type="date"></label>
+          <label><span>Hora salida</span><input id="departure" type="time"></label>
+          <label><span>Hora llegada</span><input id="arrival" type="time"></label>
+          <label><span>Aeronave / matrícula</span><input id="aircraft" placeholder="EC-..."></label>
+          <label><span>Piloto</span><input id="pilot" placeholder="Nombre"></label>
+          <label><span>Copiloto / observador</span><input id="crew" placeholder="Opcional"></label>
+          <label><span>Origen</span><input id="origin" placeholder="Aeródromo"></label>
+          <label><span>Destino / zona</span><input id="destination" placeholder="Destino"></label>
+        </div>
+        <div class="grid two" style="margin-top: 12px;">
+          <label><span>Tipo de misión</span>
+            <select id="missionType">
+              <option>Entrenamiento</option>
+              <option>Traslado</option>
+              <option>Reconocimiento</option>
+              <option>Fotografía / vídeo</option>
+              <option>Operación interna</option>
+              <option>Otro</option>
+            </select>
+          </label>
+          <label><span>Condiciones meteo</span><input id="weather" placeholder="VMC, viento, visibilidad..."></label>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <div>
+        <section class="section">
+          <div class="section-header">
+            <h2>Checklist operativo</h2>
+            <span class="pill" id="phaseLabel">Pre-vuelo</span>
+          </div>
+          <div class="section-body">
+            <div class="tabs" id="tabs"></div>
+            <div class="checklist" id="checklist"></div>
+          </div>
+        </section>
+
+        <section class="section print-only">
+          <div class="section-header">
+            <h2>Checklist completo</h2>
+          </div>
+          <div class="section-body" id="printChecklist"></div>
+        </section>
+
+        <section class="section">
+          <div class="section-header">
+            <h2>Notas de vuelo</h2>
+          </div>
+          <div class="section-body">
+            <div class="grid two">
+              <label><span>Riesgos / NOTAM / restricciones</span><textarea id="risks" placeholder="Espacio aéreo, terreno, obstáculos, NOTAM, límites personales..."></textarea></label>
+              <label><span>Observaciones en misión</span><textarea id="flightNotes" placeholder="Cambios, decisiones, comunicaciones, puntos relevantes..."></textarea></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="postFlight">
+          <div class="section-header">
+            <h2>Post-vuelo</h2>
+            <span class="pill" id="postStatus">Pendiente</span>
+          </div>
+          <div class="section-body">
+            <div class="grid two">
+              <label><span>Resultado</span>
+                <select id="result">
+                  <option>Completado sin incidencias</option>
+                  <option>Completado con observaciones</option>
+                  <option>Abortado / retornado</option>
+                  <option>Requiere seguimiento</option>
+                </select>
+              </label>
+              <label><span>Tiempo de vuelo</span><input id="flightTime" placeholder="Ej. 1h 25m"></label>
+              <label><span>Combustible / batería final</span><input id="fuelEnd" placeholder="Cantidad o porcentaje"></label>
+              <label><span>Próxima acción</span><input id="nextAction" placeholder="Mantenimiento, briefing, archivo..."></label>
+            </div>
+            <div class="grid two" style="margin-top: 12px;">
+              <label><span>Incidencias</span><textarea id="incidents" placeholder="Anomalías, fallos, desviaciones, avisos, sustos..."></textarea></label>
+              <label><span>Lecciones aprendidas</span><textarea id="lessons" placeholder="Qué repetir, qué mejorar, qué revisar antes de la próxima misión..."></textarea></label>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;" class="no-print">
+              <button id="finishBtn" class="primary">Cerrar post-vuelo</button>
+              <button id="copySummaryBtn">Copiar resumen</button>
+            </div>
+            <div class="post-summary" id="postSummary" style="margin-top: 12px;"></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="aside">
+        <section class="section">
+          <div class="section-header">
+            <h2>Estado</h2>
+          </div>
+          <div class="section-body">
+            <div class="metric">
+              <span>Checklist</span>
+              <strong id="progressText">0%</strong>
+            </div>
+            <div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
+            <div class="metric">
+              <span>Items completados</span>
+              <strong id="doneText">0/0</strong>
+            </div>
+            <div class="metric">
+              <span>Fases cerradas</span>
+              <strong id="phaseText">0/0</strong>
+            </div>
+            <p class="hint">Al exportar, elige “Guardar como PDF” y selecciona tu carpeta de OneDrive de la misión.</p>
+            <p class="footer-note" id="saveState">Sin guardar</p>
+          </div>
+        </section>
+
+        <section class="section print-only">
+          <div class="section-header">
+            <h2>Resumen imprimible</h2>
+          </div>
+          <div class="section-body" id="printSummary"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const phases = [
+      {
+        id: "preflight",
+        name: "Pre-vuelo",
+        items: [
+          "Documentación, permisos y briefing revisados",
+          "Meteo, NOTAM y alternativas confirmadas",
+          "Plan de vuelo / ruta / zona de trabajo validado",
+          "Peso, balance y autonomía dentro de límites",
+          "Inspección exterior completada",
+          "Combustible / batería suficiente y seguro",
+          "Instrumentos, radios y navegación configurados",
+          "Emergencias y criterios de abortaje repasados"
+        ]
+      },
+      {
+        id: "startup",
+        name: "Puesta en marcha",
+        items: [
+          "Cabina asegurada y cinturones colocados",
+          "Checklist de arranque completada",
+          "Aviónica / sistemas sin alarmas críticas",
+          "Comunicaciones probadas",
+          "QNH / altímetros ajustados",
+          "Briefing de rodaje y pista activa confirmado"
+        ]
+      },
+      {
+        id: "takeoff",
+        name: "Despegue",
+        items: [
+          "Controles libres y correctos",
+          "Configuración de despegue verificada",
+          "Pista, viento y tráfico comprobados",
+          "Potencia / parámetros normales",
+          "Velocidades clave confirmadas",
+          "Plan de emergencia tras despegue activo"
+        ]
+      },
+      {
+        id: "mission",
+        name: "Misión",
+        items: [
+          "Posición y altitud monitorizadas",
+          "Separación con tráfico y obstáculos mantenida",
+          "Comunicaciones según plan",
+          "Combustible / batería dentro de margen",
+          "Objetivo de misión completado o actualizado",
+          "Decisiones y cambios anotados"
+        ]
+      },
+      {
+        id: "landing",
+        name: "Aterrizaje",
+        items: [
+          "ATIS / información de campo revisada",
+          "Briefing de aproximación completado",
+          "Configuración de aterrizaje establecida",
+          "Pista libre y viento comprobado",
+          "Aproximación estabilizada",
+          "Post-aterrizaje y rodaje completados"
+        ]
+      }
+    ];
+
+    const fields = [
+      "date", "departure", "arrival", "aircraft", "pilot", "crew", "origin", "destination",
+      "missionType", "weather", "risks", "flightNotes", "result", "flightTime", "fuelEnd",
+      "nextAction", "incidents", "lessons"
+    ];
+
+    const storageKey = "flight-checklist-v1";
+    const state = {
+      activePhase: phases[0].id,
+      checks: {},
+      postClosed: false
+    };
+
+    phases.forEach(phase => {
+      state.checks[phase.id] = phase.items.map(() => false);
+    });
+
+    const $ = selector => document.querySelector(selector);
+    const checklist = $("#checklist");
+    const tabs = $("#tabs");
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function missionCode() {
+      const date = $("#date").value || today();
+      const aircraft = ($("#aircraft").value || "SIN-MAT").trim().replace(/\s+/g, "-").toUpperCase();
+      const destination = ($("#destination").value || "MISION").trim().replace(/\s+/g, "-").toUpperCase();
+      return `${date}_${aircraft}_${destination}`;
+    }
+
+    function renderTabs() {
+      tabs.innerHTML = "";
+      phases.forEach(phase => {
+        const btn = document.createElement("button");
+        btn.className = `tab ${phase.id === state.activePhase ? "active" : ""}`;
+        btn.textContent = phase.name;
+        btn.type = "button";
+        btn.addEventListener("click", () => {
+          state.activePhase = phase.id;
+          render();
+        });
+        tabs.appendChild(btn);
+      });
+    }
+
+    function renderChecklist() {
+      const phase = phases.find(item => item.id === state.activePhase);
+      $("#phaseLabel").textContent = phase.name;
+      checklist.innerHTML = "";
+
+      phase.items.forEach((text, index) => {
+        const row = document.createElement("label");
+        row.className = `item ${state.checks[phase.id][index] ? "done" : ""}`;
+        row.innerHTML = `
+          <input type="checkbox" ${state.checks[phase.id][index] ? "checked" : ""}>
+          <span class="item-text">${text}</span>
+          <span class="status">${state.checks[phase.id][index] ? "OK" : "Pendiente"}</span>
+        `;
+        row.querySelector("input").addEventListener("change", event => {
+          state.checks[phase.id][index] = event.target.checked;
+          render();
+          persist(false);
+        });
+        checklist.appendChild(row);
+      });
+
+      renderPrintChecklist();
+    }
+
+    function renderPrintChecklist() {
+      const printChecklist = $("#printChecklist");
+      printChecklist.innerHTML = "";
+      phases.forEach(phase => {
+        const title = document.createElement("h3");
+        title.textContent = phase.name;
+        title.style.margin = "8px 0";
+        title.style.fontSize = "15px";
+        printChecklist.appendChild(title);
+
+        const list = document.createElement("div");
+        list.className = "checklist";
+        phase.items.forEach((text, index) => {
+          const row = document.createElement("div");
+          row.className = `item ${state.checks[phase.id][index] ? "done" : ""}`;
+          row.innerHTML = `
+            <span>${state.checks[phase.id][index] ? "☑" : "☐"}</span>
+            <span class="item-text">${text}</span>
+            <span class="status">${state.checks[phase.id][index] ? "OK" : "Pendiente"}</span>
+          `;
+          list.appendChild(row);
+        });
+        printChecklist.appendChild(list);
+      });
+    }
+
+    function totals() {
+      const all = phases.flatMap(phase => state.checks[phase.id]);
+      const done = all.filter(Boolean).length;
+      const completedPhases = phases.filter(phase => state.checks[phase.id].every(Boolean)).length;
+      return { done, total: all.length, completedPhases };
+    }
+
+    function updateStatus() {
+      const { done, total, completedPhases } = totals();
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      $("#progressText").textContent = `${pct}%`;
+      $("#doneText").textContent = `${done}/${total}`;
+      $("#phaseText").textContent = `${completedPhases}/${phases.length}`;
+      $("#progressBar").style.width = `${pct}%`;
+      $("#missionCode").textContent = missionCode();
+      $("#postStatus").textContent = state.postClosed ? "Cerrado" : "Pendiente";
+      $("#postStatus").style.background = state.postClosed ? "#e7f5ee" : "#fff4df";
+      $("#postStatus").style.color = state.postClosed ? "var(--ok)" : "var(--warn)";
+      renderSummary();
+    }
+
+    function fieldValue(id) {
+      return ($("#" + id).value || "").trim();
+    }
+
+    function renderSummary() {
+      const lines = [
+        `<strong>${missionCode()}</strong>`,
+        `Misión: ${fieldValue("missionType") || "Sin tipo"} | Aeronave: ${fieldValue("aircraft") || "Sin matrícula"}`,
+        `Ruta/zona: ${fieldValue("origin") || "Origen no indicado"} -> ${fieldValue("destination") || "Destino no indicado"}`,
+        `Resultado: ${fieldValue("result") || "Pendiente"} | Tiempo: ${fieldValue("flightTime") || "Sin registrar"}`,
+        `Incidencias: ${fieldValue("incidents") || "Sin incidencias registradas"}`,
+        `Lecciones: ${fieldValue("lessons") || "Sin lecciones registradas"}`,
+        `Próxima acción: ${fieldValue("nextAction") || "Sin definir"}`
+      ];
+      $("#postSummary").innerHTML = lines.join("<br>");
+      $("#printSummary").innerHTML = lines.join("<br>");
+    }
+
+    function render() {
+      renderTabs();
+      renderChecklist();
+      updateStatus();
+    }
+
+    function readForm() {
+      const values = {};
+      fields.forEach(id => values[id] = $("#" + id).value);
+      return values;
+    }
+
+    function writeForm(values = {}) {
+      fields.forEach(id => {
+        if (values[id] !== undefined) $("#" + id).value = values[id];
+      });
+    }
+
+    function persist(showMessage = true) {
+      const payload = {
+        values: readForm(),
+        checks: state.checks,
+        activePhase: state.activePhase,
+        postClosed: state.postClosed,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      if (showMessage) $("#saveState").textContent = `Guardado: ${new Date().toLocaleString()}`;
+    }
+
+    function load() {
+      $("#date").value = today();
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      try {
+        const payload = JSON.parse(raw);
+        writeForm(payload.values);
+        Object.assign(state.checks, payload.checks || {});
+        state.activePhase = payload.activePhase || phases[0].id;
+        state.postClosed = Boolean(payload.postClosed);
+        if (payload.updatedAt) $("#saveState").textContent = `Borrador cargado: ${new Date(payload.updatedAt).toLocaleString()}`;
+      } catch {
+        $("#saveState").textContent = "No se pudo cargar el borrador";
+      }
+    }
+
+    function resetMission() {
+      if (!confirm("¿Crear una misión nueva y limpiar el borrador actual?")) return;
+      localStorage.removeItem(storageKey);
+      fields.forEach(id => $("#" + id).value = "");
+      $("#date").value = today();
+      phases.forEach(phase => state.checks[phase.id] = phase.items.map(() => false));
+      state.activePhase = phases[0].id;
+      state.postClosed = false;
+      $("#saveState").textContent = "Nueva misión";
+      render();
+    }
+
+    function exportPdf() {
+      persist(false);
+      document.title = missionCode();
+      window.print();
+    }
+
+    function copySummary() {
+      const text = $("#postSummary").innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        $("#saveState").textContent = "Resumen copiado";
+      }).catch(() => {
+        $("#saveState").textContent = "No se pudo copiar automáticamente";
+      });
+    }
+
+    function handleFieldChange(event) {
+      if (!fields.includes(event.target.id)) return;
+      updateStatus();
+      persist(false);
+    }
+
+    document.addEventListener("input", handleFieldChange);
+    document.addEventListener("change", handleFieldChange);
+
+    $("#saveBtn").addEventListener("click", () => persist(true));
+    $("#resetBtn").addEventListener("click", resetMission);
+    $("#pdfBtn").addEventListener("click", exportPdf);
+    $("#finishBtn").addEventListener("click", () => {
+      state.postClosed = true;
+      persist(true);
+      render();
+      location.hash = "postFlight";
+    });
+    $("#copySummaryBtn").addEventListener("click", copySummary);
+
+    load();
+    render();
+  </script>
+</body>
+</html>
